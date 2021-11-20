@@ -1,0 +1,545 @@
+{
+	"compiler": {
+		"version": "0.7.0+commit.9e61f92b"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_from",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "newCollateralRatio",
+						"type": "uint256"
+					}
+				],
+				"name": "Borrow",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_from",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "Deposit",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "liquidator",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "accountLiquidated",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "collateralToken",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amountOfCollateral",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amountSentBack",
+						"type": "uint256"
+					}
+				],
+				"name": "Liquidate",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_from",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "remainingDebt",
+						"type": "uint256"
+					}
+				],
+				"name": "Repay",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "_from",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "Withdraw",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "borrow",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "deposit",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "ethMagic",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					}
+				],
+				"name": "getBalance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "getCollateralRatio",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "hakToken",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "liquidate",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "priceOracle",
+				"outputs": [
+					{
+						"internalType": "contract IPriceOracle",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "repay",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "token",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "withdraw",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {
+				"borrow(address,uint256)": {
+					"params": {
+						"amount": "- the amount to borrow. If this amount is set to zero (0),                 then the amount borrowed should be the maximum allowed,                  while respecting the collateral ratio of 150%.",
+						"token": "- the address of the token to borrow. This address must be                set to 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE, otherwise                  the transaction must revert."
+					},
+					"returns": {
+						"_0": "- the current collateral ratio."
+					}
+				},
+				"deposit(address,uint256)": {
+					"params": {
+						"amount": "- the amount of the given token to deposit.",
+						"token": "- the address of the token to deposit. If this address is                set to 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE then                 the token to deposit is ETH."
+					},
+					"returns": {
+						"_0": "- true if the deposit was successful, otherwise revert."
+					}
+				},
+				"getBalance(address)": {
+					"params": {
+						"token": "- the address of the token for which the balance is computed."
+					},
+					"returns": {
+						"_0": "- the value of the caller's balance with interest, excluding debts."
+					}
+				},
+				"getCollateralRatio(address,address)": {
+					"params": {
+						"account": "- the account that took out the loan.",
+						"token": "- the address of the deposited token used a collateral for the loan. "
+					},
+					"returns": {
+						"_0": "- the value of the collateral ratio with 2 percentage decimals, e.g. 1% = 100.           If the account has no deposits for the given token then return zero (0).           If the account has deposited token, but has not borrowed anything then            return MAX_INT."
+					}
+				},
+				"liquidate(address,address)": {
+					"params": {
+						"account": "- the account that took out the loan that is now undercollateralized.",
+						"token": "- the address of the token used as collateral for the loan. "
+					},
+					"returns": {
+						"_0": "- true if the liquidation was successful, otherwise revert."
+					}
+				},
+				"repay(address,uint256)": {
+					"params": {
+						"amount": "- the amount to repay including the interest.",
+						"token": "- the address of the token to repay. If this address is                set to 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE then                 the token is ETH."
+					},
+					"returns": {
+						"_0": "- the amount still left to pay for this loan, excluding interest."
+					}
+				},
+				"withdraw(address,uint256)": {
+					"params": {
+						"amount": "- the amount of the given token to withdraw. If this param                 is set to 0, then the maximum amount available in the                  caller's account should be withdrawn.",
+						"token": "- the address of the token to withdraw. If this address is                set to 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE then                 the token to withdraw is ETH."
+					},
+					"returns": {
+						"_0": "- the amount that was withdrawn plus interest upon success,            otherwise revert."
+					}
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"borrow(address,uint256)": {
+					"notice": "The purpose of this function is to allow users to borrow funds by using their  deposited funds as collateral. The minimum ratio of deposited funds over  borrowed funds must not be less than 150%."
+				},
+				"deposit(address,uint256)": {
+					"notice": "The purpose of this function is to allow end-users to deposit a given  token amount into their bank account."
+				},
+				"getBalance(address)": {
+					"notice": "The purpose of this function is to return the balance that the caller  has in their own account for the given token (including interest)."
+				},
+				"getCollateralRatio(address,address)": {
+					"notice": "The purpose of this function is to return the collateral ratio for any account. The collateral ratio is computed as the value deposited divided by the value borrowed. However, if no value is borrowed then the function should return  uint256 MAX_INT = type(uint256).max"
+				},
+				"liquidate(address,address)": {
+					"notice": "The purpose of this function is to allow so called keepers to collect bad debt, that is in case the collateral ratio goes below 150% for any loan. "
+				},
+				"repay(address,uint256)": {
+					"notice": "The purpose of this function is to allow users to repay their loans. Loans can be repaid partially or entirely. When replaying a loan, an interest payment is also required. The interest on a loan is equal to 5% of the amount lent per 100 blocks. If the loan is repaid earlier, or later then the interest should be proportional to the number of  blocks that the amount was borrowed for."
+				},
+				"withdraw(address,uint256)": {
+					"notice": "The purpose of this function is to allow end-users to withdraw a given  token amount from their bank account. Upon withdrawal, the user must automatically receive a 3% interest rate per 100 blocks on their deposit."
+				}
+			},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/Bank.sol": "Bank"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"@openzeppelin/contracts/GSN/Context.sol": {
+			"keccak256": "0x9486045e189facd2e868ece35249872598ef03f1087fb6fa4d1161842daa2287",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://77c3a04ef8453788b14b1ebbc24dd3f0a18ceb2615cd156aac949a611e552af8",
+				"dweb:/ipfs/QmcmqWGguRM3iLuF57tcyrN3F6EA63kzeNkDfQuteBnurr"
+			]
+		},
+		"@openzeppelin/contracts/math/SafeMath.sol": {
+			"keccak256": "0xcc78a17dd88fa5a2edc60c8489e2f405c0913b377216a5b26b35656b2d0dab52",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://526dc85e1f9b9b45830e202568d267d93dde7a4fcccf4ad7798dadcd92304d3c",
+				"dweb:/ipfs/QmaoXMB972J3cSDLtBq3xBo4jLwqD2uzXTwujtSPqkYVhR"
+			]
+		},
+		"@openzeppelin/contracts/token/ERC20/ERC20.sol": {
+			"keccak256": "0xca0c2396dbeb3503b51abf4248ebf77a1461edad513c01529df51850a012bee3",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://991b44ff44e0496e8554a90f4c0512c28faed45104d40430019f3c67ea67740e",
+				"dweb:/ipfs/Qmc3nRapVbcctELoZS5qe17zLkFB3bETBfwzCTMF1CSuGE"
+			]
+		},
+		"@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+			"keccak256": "0x5f02220344881ce43204ae4a6281145a67bc52c2bb1290a791857df3d19d78f5",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://24427744bd3e6cb73c17010119af12a318289c0253a4d9acb8576c9fb3797b08",
+				"dweb:/ipfs/QmTLDqpKRBuxGxRAmjgXt9AkXyACW3MtKzi7PYjm5iMfGC"
+			]
+		},
+		"@openzeppelin/contracts/utils/Context.sol": {
+			"keccak256": "0x8d3cb350f04ff49cfb10aef08d87f19dcbaecc8027b0bed12f3275cd12f38cf0",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://ded47ec7c96750f9bd04bbbc84f659992d4ba901cb7b532a52cd468272cf378f",
+				"dweb:/ipfs/QmfBrGtQP7rZEqEg6Wz6jh2N2Kukpj1z5v3CGWmAqrzm96"
+			]
+		},
+		"contracts/Bank.sol": {
+			"keccak256": "0x7afb2c4934aa987c940e884a7829be21af8cfdeb9a308a0463c8237969ba5af5",
+			"license": "Unlicense",
+			"urls": [
+				"bzz-raw://545621e0fec891f6074bfdbf6a916e526ef7629b3a707df267b0d0c8ae2a1d6e",
+				"dweb:/ipfs/QmQEPpj1FkYSv6kA7QAXvbHM8qdhEip1URJ5ULPujwRLMq"
+			]
+		},
+		"contracts/interfaces/IBank.sol": {
+			"keccak256": "0x1891dc35d0e80333a9e84196a4bfbfe9d1cf3a09c2e562b9b01a91d7577ed582",
+			"license": "Unlicense",
+			"urls": [
+				"bzz-raw://aa3ce3de26da96438f98b9168b7c5a194ef76986afe2ba663bf665c719111fc4",
+				"dweb:/ipfs/QmdtawCmUB7BUxBT4wvQ8ZjovQAjX4HvNdC5Zy2kBzkVgW"
+			]
+		},
+		"contracts/interfaces/IPriceOracle.sol": {
+			"keccak256": "0xb031178cfe29b895084fde02fcf10f2fd85e8c70235157eb93f22c660a14180f",
+			"license": "Unlicense",
+			"urls": [
+				"bzz-raw://c47642f400e6a6dc1bf50c7d32dfd09911d3ecc6a7e45bdcd32eaacae8975357",
+				"dweb:/ipfs/QmVpXR3sugUERS22qpu7TTnnG9XWeDLAyc6r9iYUymwnpc"
+			]
+		},
+		"contracts/libraries/Math.sol": {
+			"keccak256": "0x08ad36918669c9ca7e9bd4d6e9268f83063d86f8974b1ba675ef82fb00a7bd7d",
+			"license": "AGPL-3.0-or-later",
+			"urls": [
+				"bzz-raw://ee21f332d86742489db2e8ce469dc0dc08700487758b9a56a044859d5fccef45",
+				"dweb:/ipfs/QmWfonR6ykETSniXHyBLDNPpwTcxMZEJbkUoATQZifV3bU"
+			]
+		}
+	},
+	"version": 1
+}

@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/GSN/Context.sol";
 
 contract Bank is Context, IBank {
 
-    using DSMath for uint;
+    using DSMath for uint256;
 
     IPriceOracle public priceOracle;
     address public hakToken;
@@ -20,25 +20,68 @@ contract Bank is Context, IBank {
     mapping (address => Account) ethAccount;
     mapping (address => Account) loanAccount;
 
-    constructor(address _priceOracle, address _hakToken) {
-        priceOracle = IPriceOracle(_priceOracle);
-        hakToken = _hakToken;
+    constructor() {
+        priceOracle = IPriceOracle(address(0xc3F639B8a6831ff50aD8113B438E2Ef873845552));
+        hakToken = address(0xBefeeD4CB8c6DD190793b1c97B72B60272f3EA6C);
+    }
+
+    /**
+     * Substract deposit from the account
+     * @param account - the account to Account
+     * @param amount - the amount to substract
+     */
+    function _substract(Account storage account, uint256 amount) private {
+
+        if(account.interest > amount) {
+            account.interest = account.interest.sub(amount);
+        }
+        else if(account.interest <= amount) {
+            account.deposit = account.deposit.sub(account.deposit.sub(account.interest));
+            account.interest = 0;
+        }
+    }
+
+    /**
+     * This funtion calculates the corateral interest.
+     * @param ethLoan - amount of the Ethereum loan.
+     * @param hakCorateral - amount of the HAK corateral.
+     */
+    function _calculateCorateralRatio(uint256 ethLoan, uint256 hakCorateral) view private returns (uint256) {
+        require(ethLoan != 0);
+        uint256 hakToEthRate = priceOracle.getVirtualPrice(hakToken);
+        return (hakCorateral.mul(hakToEthRate).mul(10000) / (10 ** 18)) / ethLoan;
     }
 
     /**
      * This function calculates the interest.
      * @param acc - the account to update its interest.
      */
-    function _calculateInterest(Account storage acc, uint rate) view private returns (uint) {
-        uint deltaBlocks = block.number.sub(acc.lastInterestBlock);
+    function _calculateInterest(Account storage acc, uint256 rate) view private returns (uint256) {
+        uint256 deltaBlocks = block.number.sub(acc.lastInterestBlock);
         return acc.interest.add(acc.deposit.mul(deltaBlocks.mul(rate)) / 10000);
+    }
+
+    /**
+     * Convert Hak to Eth
+     * @param hakAmount - the amount of hak.
+     */
+    function _convertHakToEth(uint256 hakAmount) view private returns (uint256) {
+        return hakAmount.mul(priceOracle.getVirtualPrice(hakToken)) / (10 ** 18);
+    }
+
+    /**
+     * Convert Eth to Hak
+     * @param ethAmount - the amount of hak.
+     */
+    function _convertEthToHak(uint256 ethAmount) view private returns (uint256) {
+        return ethAmount.mul(10 ** 18) / priceOracle.getVirtualPrice(hakToken);
     }
 
     /**
      * This function updates the interest.
      * @param acc - the account to update its interest.
      */
-    function _updateInterest(Account storage acc, uint rate) private {
+    function _updateInterest(Account storage acc, uint256 rate) private {
         if(acc.lastInterestBlock == 0){
             acc.lastInterestBlock = block.number;
         }
@@ -123,7 +166,7 @@ contract Bank is Context, IBank {
 
         _updateInterest(acc, 3);
 
-        uint maximumAmount = acc.deposit.add(_calculateInterest(acc, 3));
+        uint256 maximumAmount = acc.deposit.add(_calculateInterest(acc, 3));
 
         if(maximumAmount == 0) {
             revert("no balance");
@@ -171,19 +214,24 @@ contract Bank is Context, IBank {
             revert("token not supported");
         }
 
-        uint hakToEthRate = priceOracle.getVirtualPrice(hakToken);
+        uint256 hakToEthRate = priceOracle.getVirtualPrice(hakToken);
+        // uint256 hakToEthRate = 1;
 
         Account storage hakAcc = hakAccount[_msgSender()];
         Account storage loanAcc = loanAccount[_msgSender()];
 
-        uint hakBalance = hakAcc.deposit.add(_calculateInterest(hakAcc, 3));
-        uint loanBalance = loanAcc.deposit.add(_calculateInterest(loanAcc, 5));
+        uint256 hakBalance = hakAcc.deposit.add(_calculateInterest(hakAcc, 3));
+        uint256 loanBalance = loanAcc.deposit.add(_calculateInterest(loanAcc, 5));
 
         if(hakBalance == 0) {
             revert("no collateral deposited");
         }
 
-        uint maxLoan = (hakBalance.mul(hakToEthRate).mul(150)).sub(loanBalance.mul(100)) / 100;
+        uint256 maxLoan = ((hakBalance.mul(hakToEthRate) / (150)).mul(10 ** 2) / (10 ** 18)).sub(loanBalance);
+
+        if(maxLoan < 0) {
+            revert("borrow would exceed collateral ratio");
+        }
 
         if(amount == 0) {
             amount = maxLoan;
@@ -197,24 +245,122 @@ contract Bank is Context, IBank {
 
         loanAcc.deposit = loanAcc.deposit.add(amount);
 
-        uint colateralRatio = hakBalance.mul(hakToEthRate) / loanAcc.deposit.add(_calculateInterest(loanAcc, 5));
+        uint256 colateralRatio = _calculateCorateralRatio(
+            loanAcc.deposit.add(_calculateInterest(loanAcc, 5)),
+            hakBalance
+        );
 
         emit Borrow(_msgSender(), token, amount, colateralRatio);
 
         return colateralRatio;
     }
 
+    /**
+     * The purpose of this function is to allow users to repay their loans.
+     * Loans can be repaid partially or entirely. When replaying a loan, an
+     * interest payment is also required. The interest on a loan is equal to
+     * 5% of the amount lent per 100 blocks. If the loan is repaid earlier,
+     * or later then the interest should be proportional to the number of 
+     * blocks that the amount was borrowed for.
+     * @param token - the address of the token to repay. If this address is
+     *                set to 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE then 
+     *                the token is ETH.
+     * @param amount - the amount to repay including the interest.
+     * @return - the amount still left to pay for this loan, excluding interest.
+     */
     function repay(address token, uint256 amount)
         payable
         external
         override
-        returns (uint256) {}
+        returns (uint256) {
+        
+        Account storage acc;
+        Account storage loanAcc = loanAccount[_msgSender()];
 
+        if(token == ethMagic) {
+            if(msg.value < amount) {
+                revert("msg.value < amount to repay");
+            }
+            acc = ethAccount[_msgSender()];
+        }
+        else {
+            revert("token not supported");
+        }
+
+        uint256 loanBalance = loanAcc.deposit.add(_calculateInterest(loanAcc, 5));
+
+        if(loanBalance == 0) {
+            revert("nothing to repay");
+        }
+
+        _updateInterest(loanAcc, 5);
+
+        if(loanBalance < amount) {
+            loanAcc.deposit = 0;
+            loanAcc.interest = 0;
+        }
+        else if(loanAcc.interest >= amount) {
+            loanAcc.interest = loanAcc.interest.sub(amount);
+        }
+        else{
+            loanAcc.deposit = loanAcc.deposit.sub(amount.sub(loanAcc.interest));
+            loanAcc.interest = 0;
+        }
+
+        emit Repay(_msgSender(), token, loanAcc.deposit);
+
+        return loanAcc.deposit;
+    }
+
+    /**
+     * The purpose of this function is to allow so called keepers to collect bad
+     * debt, that is in case the collateral ratio goes below 150% for any loan. 
+     * @param token - the address of the token used as collateral for the loan. 
+     * @param account - the account that took out the loan that is now undercollateralized.
+     * @return - true if the liquidation was successful, otherwise revert.
+     */
     function liquidate(address token, address account)
         payable
         external
         override
-        returns (bool) {}
+        returns (bool) {
+
+        if(token != hakToken) {
+            revert("token not supported");
+        }
+
+        if(_msgSender() == account) {
+            revert("cannot liquidate own position");
+        }
+        
+        Account storage borrowerLoan = loanAccount[account];
+        Account storage borrowerHak = hakAccount[account];
+        Account storage liquidatorHak = hakAccount[_msgSender()];
+
+        uint256 loanAmount = borrowerLoan.deposit.add(_calculateInterest(borrowerLoan, 5));
+        uint256 borrowerHakEquiEth = _convertHakToEth(_getBalance(hakToken, account));
+
+        if(getCollateralRatio(hakToken, account) >= 15000) {
+            revert("healthy position");
+        }
+
+        if(loanAmount > msg.value) {
+            revert("insufficient ETH sent by liquidator");
+        }
+
+        if(loanAmount > borrowerHakEquiEth) {
+            revert("insufficient collateral of borrower");
+        }
+
+        _substract(borrowerHak, (_convertEthToHak(msg.value)));
+        liquidatorHak.deposit = liquidatorHak.deposit.add(_convertEthToHak(msg.value));
+        borrowerLoan.deposit = 0;
+        borrowerLoan.interest = 0;
+
+        emit Liquidate(_msgSender(), account, hakToken, loanAmount, msg.value);
+
+        return true;
+    }
 
     /**
      * The purpose of this function is to return the collateral ratio for any account.
@@ -236,19 +382,14 @@ contract Bank is Context, IBank {
 
         if(token != hakToken) revert("token not supported");
 
-        uint hakToEthRate = priceOracle.getVirtualPrice(hakToken);
-
         Account storage hakAcc = hakAccount[account];
         Account storage loanAcc = loanAccount[account];
 
-        if(loanAcc.deposit.add(_calculateInterest(loanAcc, 5)) == 0) {
-            return type(uint256).max;
-        }
-
-        return (hakAcc.deposit.add(_calculateInterest(hakAcc, 3)).mul(hakToEthRate)) /
-               (loanAcc.deposit.add(_calculateInterest(loanAcc, 5)));
+        return _calculateCorateralRatio(
+            loanAcc.deposit.add(_calculateInterest(loanAcc, 5)),
+            hakAcc.deposit.add(_calculateInterest(hakAcc, 3))
+        );
     }
-
 
     /**
      * The purpose of this function is to return the balance that the caller 
@@ -261,14 +402,25 @@ contract Bank is Context, IBank {
         public
         override
         returns (uint256) {
+        return _getBalance(token, _msgSender());
+    }
+
+    /**
+     * The purpose of this function is to return the balance that the caller 
+     * has in their own account for the given token (including interest).
+     * @param token - the address of the token for which the balance is computed.
+     * @param account - the address of the account.
+     * @return - the value of the caller's balance with interest, excluding debts.
+     */
+    function _getBalance(address token, address account) view private returns(uint256) {
 
         Account storage acc;
 
         if(token == hakToken){
-            acc = hakAccount[_msgSender()];
+            acc = hakAccount[account];
         }
         else if(token == ethMagic) {
-            acc = ethAccount[_msgSender()];
+            acc = ethAccount[account];
         }
         else{
             revert("token not supported");
